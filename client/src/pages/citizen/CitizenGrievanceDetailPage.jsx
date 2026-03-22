@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { getGrievanceByIdRequest } from "../../api/grievanceApi";
+import {
+  addGrievanceCommentRequest,
+  addGrievanceRatingRequest,
+  getGrievanceByIdRequest,
+} from "../../api/grievanceApi";
+import useAuth from "../../hooks/useAuth";
 import { getStatusLabel } from "../../utils/grievanceMeta";
 
 const statusSequence = [
@@ -16,8 +21,14 @@ const statusSequence = [
 
 const CitizenGrievanceDetailPage = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [grievance, setGrievance] = useState(null);
+  const [commentText, setCommentText] = useState("");
+  const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+  const [rating, setRating] = useState(grievance?.rating || 0);
+  const [ratingComment, setRatingComment] = useState(grievance?.ratingComment || "");
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -44,6 +55,60 @@ const CitizenGrievanceDetailPage = () => {
     });
     return map;
   }, [grievance]);
+
+  useEffect(() => {
+    setRating(grievance?.rating || 0);
+    setRatingComment(grievance?.ratingComment || "");
+  }, [grievance]);
+
+  const canRate =
+    grievance?.status === "closed" &&
+    user?.role === "citizen" &&
+    user?._id === grievance?.citizen?._id;
+
+  const handleCommentSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!commentText.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    try {
+      setIsCommentSubmitting(true);
+      const response = await addGrievanceCommentRequest(id, { text: commentText.trim() });
+      setGrievance(response?.data || grievance);
+      setCommentText("");
+      toast.success("Comment added");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to add comment");
+    } finally {
+      setIsCommentSubmitting(false);
+    }
+  };
+
+  const handleRatingSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!rating || rating < 1 || rating > 5) {
+      toast.error("Please select a rating between 1 and 5");
+      return;
+    }
+
+    try {
+      setIsRatingSubmitting(true);
+      const response = await addGrievanceRatingRequest(id, {
+        rating,
+        ratingComment,
+      });
+      setGrievance(response?.data || grievance);
+      toast.success("Rating submitted");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to submit rating");
+    } finally {
+      setIsRatingSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return <p className="text-slate-600">Loading grievance detail...</p>;
@@ -130,6 +195,94 @@ const CitizenGrievanceDetailPage = () => {
           })}
         </div>
       </div>
+
+      <div className="rounded-xl bg-white p-6 shadow-sm">
+        <h3 className="text-xl font-semibold text-slate-800">Comments & Updates</h3>
+
+        <form onSubmit={handleCommentSubmit} className="mt-4 space-y-3">
+          <textarea
+            value={commentText}
+            onChange={(event) => setCommentText(event.target.value)}
+            rows={3}
+            placeholder="Add an update or comment"
+            className="w-full rounded border border-slate-300 px-3 py-2 outline-none focus:border-primary"
+          />
+          <button
+            type="submit"
+            disabled={isCommentSubmitting}
+            className="rounded bg-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isCommentSubmitting ? "Posting..." : "Post Comment"}
+          </button>
+        </form>
+
+        <div className="mt-5 space-y-3">
+          {(grievance.comments || []).length === 0 ? (
+            <p className="text-sm text-slate-500">No comments yet.</p>
+          ) : (
+            grievance.comments
+              .slice()
+              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+              .map((comment, index) => (
+                <div key={`${comment.timestamp}-${index}`} className="rounded border border-slate-200 p-3">
+                  <p className="text-sm text-slate-700">{comment.text}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {comment.user?.name || "User"} ({comment.user?.role || "-"}) - {" "}
+                    {new Date(comment.timestamp).toLocaleString()}
+                  </p>
+                </div>
+              ))
+          )}
+        </div>
+      </div>
+
+      {canRate ? (
+        <div className="rounded-xl bg-white p-6 shadow-sm">
+          <h3 className="text-xl font-semibold text-slate-800">Rate Resolution</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Please rate your grievance resolution after closure.
+          </p>
+
+          <form onSubmit={handleRatingSubmit} className="mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setRating(value)}
+                  className={`rounded px-3 py-1 text-sm ${
+                    rating >= value ? "bg-accent text-white" : "bg-slate-200 text-slate-700"
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={ratingComment}
+              onChange={(event) => setRatingComment(event.target.value)}
+              rows={3}
+              placeholder="Optional feedback"
+              className="w-full rounded border border-slate-300 px-3 py-2 outline-none focus:border-primary"
+            />
+
+            <button
+              type="submit"
+              disabled={isRatingSubmitting}
+              className="rounded bg-accent px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isRatingSubmitting ? "Submitting..." : "Submit Rating"}
+            </button>
+          </form>
+
+          {grievance.rating ? (
+            <p className="mt-3 text-sm text-slate-600">
+              Current rating: {grievance.rating}/5
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 };

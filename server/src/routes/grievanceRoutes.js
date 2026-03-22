@@ -3,11 +3,15 @@ const {
   fileGrievance,
   getGrievances,
   getGrievanceById,
+  getPublicGrievanceById,
+  getOfficerWardStats,
   assignWorker,
   markInProgress,
   markResolved,
   closeGrievance,
   appealGrievance,
+  addComment,
+  addRating,
 } = require("../controllers/grievance/grievanceController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
@@ -15,7 +19,11 @@ const { uploadGrievanceImages } = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
+router.route("/public/track/:grievanceId").get(getPublicGrievanceById);
+
 router.use(protect);
+
+router.route("/officer/stats").get(authorize("officer"), getOfficerWardStats);
 
 router
   .route("/")
@@ -45,5 +53,13 @@ router
 router
   .route("/:id/appeal")
   .patch(authorize("citizen"), appealGrievance);
+
+router
+  .route("/:id/comments")
+  .post(authorize("citizen", "officer", "worker", "admin"), addComment);
+
+router
+  .route("/:id/rating")
+  .post(authorize("citizen"), addRating);
 
 module.exports = router;

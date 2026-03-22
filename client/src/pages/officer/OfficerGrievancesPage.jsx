@@ -7,12 +7,12 @@ import { getMyGrievancesRequest } from "../../api/grievanceApi";
 import { getStatusLabel } from "../../utils/grievanceMeta";
 import getErrorMessage from "../../utils/getErrorMessage";
 
-const CitizenGrievanceListPage = () => {
-  const [isLoading, setIsLoading] = useState(true);
+const OfficerGrievancesPage = () => {
   const [grievances, setGrievances] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGrievances = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await getMyGrievancesRequest();
@@ -24,38 +24,31 @@ const CitizenGrievanceListPage = () => {
       }
     };
 
-    fetchGrievances();
+    fetchData();
   }, []);
 
-  if (isLoading) {
-    return <LoadingState message="Loading your grievances..." />;
-  }
+  if (isLoading) return <LoadingState message="Loading ward grievances..." />;
 
   if (grievances.length === 0) {
     return (
       <EmptyState
-        title="No grievances yet"
-        description="You have not filed any grievances yet."
-        action={
-          <Link to="/citizen/file" className="inline-block rounded bg-primary px-4 py-2 text-white">
-            File Your First Grievance
-          </Link>
-        }
+        title="No grievances in your ward"
+        description="When citizens file grievances in your ward, they will appear here."
       />
     );
   }
 
   return (
     <section className="rounded-xl bg-white p-6 shadow-sm">
-      <h2 className="text-2xl font-semibold text-slate-800">My Grievances</h2>
+      <h2 className="text-2xl font-semibold text-slate-800">Ward Grievances</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b bg-slate-50">
-              <th className="px-3 py-2 text-left">Grievance ID</th>
+              <th className="px-3 py-2 text-left">ID</th>
               <th className="px-3 py-2 text-left">Title</th>
+              <th className="px-3 py-2 text-left">Citizen</th>
               <th className="px-3 py-2 text-left">Status</th>
-              <th className="px-3 py-2 text-left">Created</th>
               <th className="px-3 py-2 text-left">Action</th>
             </tr>
           </thead>
@@ -64,11 +57,11 @@ const CitizenGrievanceListPage = () => {
               <tr key={item._id} className="border-b">
                 <td className="px-3 py-2">{item.grievanceId}</td>
                 <td className="px-3 py-2">{item.title}</td>
+                <td className="px-3 py-2">{item?.citizen?.name || "N/A"}</td>
                 <td className="px-3 py-2">{getStatusLabel(item.status)}</td>
-                <td className="px-3 py-2">{new Date(item.createdAt).toLocaleString()}</td>
                 <td className="px-3 py-2">
-                  <Link className="text-primary" to={`/citizen/grievances/${item._id}`}>
-                    View Details
+                  <Link className="text-primary" to={`/officer/grievances/${item._id}`}>
+                    Manage
                   </Link>
                 </td>
               </tr>
@@ -80,4 +73,4 @@ const CitizenGrievanceListPage = () => {
   );
 };
 
-export default CitizenGrievanceListPage;
+export default OfficerGrievancesPage;

@@ -11,7 +11,24 @@ const DashboardLayout = () => {
           { to: "/citizen/file", label: "File Grievance" },
           { to: "/citizen/grievances", label: "My Grievances" },
         ]
-      : [{ to: "/", label: "Home" }];
+      : user?.role === "officer"
+        ? [
+            { to: "/officer/dashboard", label: "Dashboard" },
+            { to: "/officer/grievances", label: "Ward Grievances" },
+          ]
+        : user?.role === "worker"
+          ? [
+              { to: "/worker/dashboard", label: "Dashboard" },
+              { to: "/worker/grievances", label: "Assigned Grievances" },
+            ]
+          : user?.role === "admin"
+            ? [
+                { to: "/admin/dashboard", label: "Analytics" },
+                { to: "/admin/wards", label: "Manage Wards" },
+                { to: "/admin/officers", label: "Manage Officers" },
+                { to: "/admin/grievances", label: "All Grievances" },
+              ]
+            : [{ to: "/", label: "Home" }];
 
   return (
     <div className="min-h-screen bg-slate-100">

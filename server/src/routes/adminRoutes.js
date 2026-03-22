@@ -1,10 +1,10 @@
 const express = require("express");
+const { getAnalytics } = require("../controllers/admin/adminController");
+const { protect } = require("../middleware/authMiddleware");
+const { authorize } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-// Admin analytics routes go here.
-router.get("/", (req, res) => {
-  res.json({ message: "Admin routes ready" });
-});
+router.get("/analytics", protect, authorize("admin"), getAnalytics);
 
 module.exports = router;

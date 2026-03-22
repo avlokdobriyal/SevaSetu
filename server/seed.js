@@ -25,7 +25,7 @@ const ensureWard = async (payload) => {
   return Ward.create(payload);
 };
 
-const seedGrievances = async ({ citizens, wards, officers }) => {
+const seedGrievances = async ({ citizens, wards, officers, workers }) => {
   const year = new Date().getFullYear();
   const now = new Date();
   const oneDay = 24 * 60 * 60 * 1000;
@@ -58,7 +58,7 @@ const seedGrievances = async ({ citizens, wards, officers }) => {
       ward: wards[1]._id,
       citizen: citizens[1]._id,
       assignedOfficer: officers[1]._id,
-      assignedWorker: null,
+      assignedWorker: workers[1]._id,
       statusHistory: [
         {
           status: "submitted",
@@ -89,6 +89,7 @@ const seedGrievances = async ({ citizens, wards, officers }) => {
       ward: wards[0]._id,
       citizen: citizens[1]._id,
       assignedOfficer: officers[0]._id,
+      assignedWorker: workers[0]._id,
       resolutionNote: "Drain cleaned and flow normalized.",
       statusHistory: [
         {
@@ -120,6 +121,7 @@ const seedGrievances = async ({ citizens, wards, officers }) => {
       ward: wards[1]._id,
       citizen: citizens[0]._id,
       assignedOfficer: officers[1]._id,
+      assignedWorker: workers[1]._id,
       resolutionNote: "Collection schedule resumed and area sanitized.",
       rating: 4,
       ratingComment: "Resolved well, but was delayed by one day.",
@@ -227,6 +229,26 @@ const seed = async () => {
       ward: wards[1]._id,
     });
 
+    const worker1 = await ensureUser({
+      name: "Rahul Worker",
+      email: "worker1@sevasetu.com",
+      password: "Worker@123",
+      phone: "9333333331",
+      address: "Ward 1 Field Office",
+      role: "worker",
+      ward: wards[0]._id,
+    });
+
+    const worker2 = await ensureUser({
+      name: "Suman Worker",
+      email: "worker2@sevasetu.com",
+      password: "Worker@123",
+      phone: "9333333332",
+      address: "Ward 2 Field Office",
+      role: "worker",
+      ward: wards[1]._id,
+    });
+
     await Ward.findByIdAndUpdate(wards[0]._id, { officer: officer1._id });
     await Ward.findByIdAndUpdate(wards[1]._id, { officer: officer2._id });
 
@@ -234,6 +256,7 @@ const seed = async () => {
       citizens: [citizen1, citizen2],
       wards,
       officers: [officer1, officer2],
+      workers: [worker1, worker2],
     });
 
     console.log("Seed completed successfully");
@@ -242,6 +265,8 @@ const seed = async () => {
     console.log("Officer 2: officer2@sevasetu.com / Officer@123");
     console.log("Citizen 1: citizen1@sevasetu.com / Citizen@123");
     console.log("Citizen 2: citizen2@sevasetu.com / Citizen@123");
+    console.log("Worker 1: worker1@sevasetu.com / Worker@123");
+    console.log("Worker 2: worker2@sevasetu.com / Worker@123");
     console.log(`Total wards: ${await Ward.countDocuments()}`);
     console.log(`Total users: ${await User.countDocuments()}`);
     console.log(`Total grievances: ${await Grievance.countDocuments()}`);
