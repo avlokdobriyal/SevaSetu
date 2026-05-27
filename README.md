@@ -1,4 +1,4 @@
-# SevaSetu
+# SevaSetu 🏙️
 
 **SevaSetu** is a comprehensive civic grievance management platform designed to bridge the gap between citizens and municipal authorities. It features a complete role-based workflow for reporting, tracking, and resolving municipal issues like sanitation, electricity, water supply, and road maintenance.
 
@@ -14,7 +14,30 @@
 
 * **Frontend**: React (Vite), Tailwind CSS, Lucide-React
 * **Backend**: Node.js, Express.js
-* **Database**: MongoDB (Mongoose)
+* **Database**: MongoDB with Mongoose ORM
+* **Authentication**: JSON Web Tokens (JWT) & Bcrypt
+
+---
+
+## 📂 Project Structure
+
+```text
+SevaSetuV2/
+├── backend/
+│   ├── middleware/     # JWT Auth and File Upload middleware
+│   ├── models/         # Mongoose Schemas (User, Grievance)
+│   ├── routes/         # Express API Routes (Auth, Grievances, Ratings)
+│   ├── utils/          # Helper utilities
+│   ├── server.js       # Express entry point
+│   └── seed.js         # Dummy data generation script
+└── frontend/
+    ├── src/
+    │   ├── components/ # React UI Dashboards & Views
+    │   ├── App.jsx     # Main React Router
+    │   └── main.jsx    # React DOM entry
+    ├── package.json
+    └── tailwind.config.js
+```
 
 ---
 
@@ -31,12 +54,6 @@ Navigate to the backend directory, install dependencies, and start the server.
 ```bash
 cd backend
 npm install
-
-# Create a .env file (optional, defaults to local dev settings)
-# Example: 
-# PORT=5000
-# MONGO_URI=mongodb://localhost:27017/sevasetu
-# JWT_SECRET=your_jwt_secret
 
 # (Optional) Seed the database with dummy users and data
 node seed.js
@@ -57,10 +74,32 @@ npm run dev
 ```
 *The frontend should now be accessible on `http://localhost:5173`.*
 
+---
+
 ## 👥 Default Seed Accounts (For Testing)
-If you ran the `seed.js` script, you can log in with `password123` using:
+If you ran the `seed.js` script, accounts are generated across Wards 1, 7, 9, 15, and 45. You can log in with the password `password123` using any of these:
+
 * **Admin**: `admin@sevasetu.gov`
 * **Mayor**: `mayor@sevasetu.gov`
-* **Citizen**: `citizen1@example.com`
-* **Ward Member**: `member0@sevasetu.gov` (Ward 1)
-* **Worker**: `workerA0@sevasetu.gov` (Ward 1 - Electricity)
+* **Citizens**: `citizen1@example.com` to `citizen5@example.com`
+* **Ward Members**: 
+  * Ward 1: `member0@sevasetu.gov`
+  * Ward 7: `member1@sevasetu.gov`
+  * Ward 9: `member2@sevasetu.gov` 
+  * Ward 15: `member3@sevasetu.gov` 
+  * Ward 45: `member4@sevasetu.gov`
+* **Workers**: 
+  * Ward 1 (Electricity): `workerA0@sevasetu.gov`
+  * Ward 1 (Sanitation): `workerB0@sevasetu.gov`
+  * Ward 7 (Electricity): `workerA1@sevasetu.gov`
+
+## 🔐 API Endpoints Overview
+
+* **Authentication**: `/api/auth/register`, `/api/auth/login`
+* **Grievances**: 
+  * `POST /api/grievances` (Submit issue)
+  * `GET /api/grievances/my` (Citizen queries)
+  * `GET /api/grievances/dashboard` (Role-specific queries)
+* **Ratings**: 
+  * `POST /api/ratings/rate/:id` (Submit rating)
+  * `GET /api/ratings/wards` (Public ward ratings)
